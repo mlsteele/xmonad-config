@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+# example output:p Battery 0: Discharging, 39%, 01:14:12 remaining
+acpi_out = `acpi -b`
+_, perc, time_remaining = *(acpi_out.match /Battery .: Discharging, (\d+)%, (\d\d:\d\d:\d\d) remaining/)
+_, hours, mins, secs = *(time_remaining.match /(\d\d):(\d\d):(\d\d)/)
+puts "#{perc}% #{hours}:#{mins}"

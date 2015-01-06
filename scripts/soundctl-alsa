@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+
+CARD_INDEX = 1
+
+module SoundCTL
+  # Return an hash with keys :perc, :db, :state
+  def self.status
+    status_str = `amixer -c #{CARD_INDEX} get Master 2> /dev/null`
+    # example:
+    # Simple mixer control 'Master',0
+    #   Capabilities: pvolume pvolume-joined pswitch pswitch-joined
+    #   Playback channels: Mono
+    #   Limits: Playback 0 - 87
+    #   Mono: Playback 61 [70%] [-19.50dB] [on]
+
+    regex = /.*Playback \d+ \[(?<perc>\d+)%\] \[(?<db>.*)dB\] \[(?<active>on|off)\].*/
+    match = regex.match status_str
+
+    status = Hash.new
+    status[:perc]   = match[:perc].to_i
+    status[:db]     = match[:db].to_f
+    status[:active] = match[:active] == "on"
+    status
+  end
+
+  def self.muted?
+    not status[:active]
+  end
+
+  # Get current volume as integer percentage.
+  def self.vol
+    status_once = status
+    if status_once[:active]
+      status_once[:perc]
+    else
+      0
+    end
+  end
+
+  # Set current volume.
+  # Takes a number from 0 to safely above 100.
+  def self.vol=(newvol)
+    raise ArgumentError, "Volume to set out of bounds." unless 0 <= newvol and newvol <= 110
+    `amixer -c #{CARD_INDEX} set Master #{newvol}% 2> /dev/null`
+  end
+
+  def self.mute!
+    `amixer -c #{CARD_INDEX} set Master off 2> /dev/null`
+  end
+
+  def self.unmute!
+    `amixer -c #{CARD_INDEX} set Master on 2> /dev/null`
+    `amixer -c #{CARD_INDEX} set Headphone on 2> /dev/null`
+    `amixer -c #{CARD_INDEX} set Speaker on 2> /dev/null`
+    `amixer -c #{CARD_INDEX} set "Bass Speaker" on 2> /dev/null`
+  end
+
+  def self.toggle_mute!
+    if muted?
+      unmute!
+    else
+      mute!
+    end
+  end
+end
+
+
+puts SoundCTL.vol

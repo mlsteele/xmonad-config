@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=XMonad-miles
+Comment=XMonad with Miles
+Exec=/home/miles/.xmonad/scripts/startxmonad.sh
+Icon=xmonad.png
+Type=XSession
